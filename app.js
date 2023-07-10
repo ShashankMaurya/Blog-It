@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -12,51 +13,68 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
-const posts = [];
+mongoose.connect("mongodb://127.0.0.1:27017/BlogDB");
+
+const postSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        required: [true, 'Why no Title?']
+    },
+    content: {
+        type: String,
+        required: [true, 'Why no Title?']
+    }
+});
+
+const post = mongoose.model('post', postSchema);
+
+// const posts = [];
 
 // GET requests
 
-app.get('/', function(req, res){
-    res.render('home', {
-        homeContent: homeStartingContent,
-        blog_posts: posts
-    });
+app.get('/', function (req, res) {
+
+    post.find()
+        .then((posts) => {
+            res.render('home', {
+                homeContent: homeStartingContent,
+                blog_posts: posts
+            });
+        })
+        .catch((err) => console.log(err));
+
 });
 
-app.get('/about', function(req, res){
+app.get('/about', function (req, res) {
     res.render('about', {
         aboutContent: aboutContent
     });
 });
 
-app.get('/contact', function(req, res){
+app.get('/contact', function (req, res) {
     res.render('contact', {
         contactContent: contactContent
     });
 });
 
-app.get('/compose', function(req, res){
+app.get('/compose', function (req, res) {
     res.render('compose');
 });
 
-app.get('/failure', function(req, res){
+app.get('/failure', function (req, res) {
     res.render('failure');
 });
 
-app.get('/posts/:postName', function(req, res){
-    // console.log(req.params.postName);
-    // let reqPost = posts.find(element => element.title === req.params.postName);
-    posts.forEach(function(element){
-        if(_.lowerCase(element.title) === _.lowerCase(req.params.postName)){
-            res.render('post',{
-                 title: element.title,
-                 content: element.content
+app.get('/posts/:postId', function (req, res) {
+
+    post.findById(req.params.postId)
+        .then((foundPost) => {
+            res.render('post', {
+                title: foundPost.title,
+                content: foundPost.content
             });
-        }
-        else{
-            res.render('failure');
-        }
-    });
+        })
+        .catch((err)=>console.log(err));
 
 });
 
@@ -65,11 +83,15 @@ app.get('/posts/:postName', function(req, res){
 
 // POST requests
 
-app.post('/compose', function(req, res){
-    posts.push({
+app.post('/compose', function (req, res) {
+
+    new post({
         title: req.body.blog_title,
         content: req.body.blog_data
-    });
+    }).save()
+        .then(() => console.log('Post saved successfully'))
+        .catch((err) => console.log(err));
+
     res.redirect('/')
 });
 
@@ -78,6 +100,6 @@ app.post('/compose', function(req, res){
 
 // LISTENER set-up
 
-app.listen(3000, function(){
+app.listen(3000, function () {
     console.log('server started on port 3000...');
 });
