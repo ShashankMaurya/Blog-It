@@ -22,7 +22,7 @@ const postSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: [true, 'Why no Title?']
+        required: [true, 'Why no Content?']
     }
 });
 
