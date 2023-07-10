@@ -28,7 +28,6 @@ const postSchema = new mongoose.Schema({
 
 const post = mongoose.model('post', postSchema);
 
-// const posts = [];
 
 // GET requests
 
